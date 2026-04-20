@@ -1,0 +1,107 @@
+# ============================================================================
+# DeltaV — .gitignore
+# Standard Unreal Engine 5 + Visual Studio + macOS/Linux safety
+# Source of truth: https://github.com/github/gitignore/blob/main/UnrealEngine.gitignore
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Unreal Engine 5 generated / intermediate artifacts
+# ---------------------------------------------------------------------------
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+
+# Generated UE files
+*.generated.*
+*.gen.*
+
+# UE Crash reports
+*.crash
+*.dmp
+
+# ---------------------------------------------------------------------------
+# Visual Studio
+# ---------------------------------------------------------------------------
+.vs/
+*.sln
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+*.userprefs
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+*.cachefile
+
+# Project-wide Rider / ReSharper
+.idea/
+*.DotSettings.user
+
+# ---------------------------------------------------------------------------
+# Build output (safety)
+# ---------------------------------------------------------------------------
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.pch
+*.ipch
+
+# ---------------------------------------------------------------------------
+# OS noise
+# ---------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ---------------------------------------------------------------------------
+# Editor / tooling
+# ---------------------------------------------------------------------------
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ---------------------------------------------------------------------------
+# Local logs / temp
+# ---------------------------------------------------------------------------
+*.log
+*.tmp
+*.temp
+
+# ---------------------------------------------------------------------------
+# Local secrets / environment (never commit)
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.local.ini
+
+# Steam AppID file (contains live app ID in shipping only — never commit)
+steam_appid.txt
+
+# ---------------------------------------------------------------------------
+# Claude Code / AI tooling local state
+# ---------------------------------------------------------------------------
+.claude/
+.aider*
