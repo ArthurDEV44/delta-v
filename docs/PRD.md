@@ -7,6 +7,7 @@
 |---------|------|--------|---------|
 | 1.0 | 2026-04-20 | Arthur Jean + Claude Code | Initial draft — MVP vertical slice, 12 phases, 67 stories |
 | 1.1 | 2026-04-21 | Arthur Jean + Claude Code | Art Direction clarification (clean PBR realism, non gritty) ; Niagara exhaust Raptor-style + ground smoke + ascent trail (US-040 size M→L) ; US-050 plasma ionization colors conformes O₂/N₂ ; US-063 refined avec Niagara Fluids + Prandtl-Glauert ; new US-068 vehicle wear accumulation + repair system ; new assumption A7 |
+| 1.2 | 2026-04-21 | Arthur Jean + Claude Code | Smoke visual reference = **Counter-Strike 2 dynamic smoke** (silhouette pillowy, soft edges, self-shadowing). Visuel uniquement — implémentation MVP = particle billboards (pas voxel volumétrique CS2), upgrade Niagara Fluids en polish phase. US-040 + US-063 AC side-by-side visual comparison ajoutées. |
 
 ## Problem Statement
 
@@ -61,6 +62,7 @@ L'architecture technique repose sur quatre décisions structurantes : (a) **dual
 
 - **Niagara exhaust** (moteurs actifs, décollage/burn) : **Raptor-style** — cœur bleu profond HDR avec **mach diamonds orange** visibles. Référence : SpaceX Starship static fire livestreams.
 - **Plasma ablation** (rentrée atmosphérique) : **orange-rouge (émission O₂) + rose (émission N₂) + bleu-blanc (dissociation haute-énergie)** — conforme à l'ionisation atmosphérique réelle Space Shuttle / Dragon.
+- **Smoke visual reference** (ground cloud décollage + ascent trail) : **Counter-Strike 2 dynamic smoke** — silhouette *pillowy* dense, bords soft billowing, turbulence stable fluide, self-shadowing apparent. **Visuel uniquement** — la technique CS2 (voxel volumétrique réactif Source 2, compute shaders custom) est hors scope MVP et coûte 5–15 % FPS d'après benchmarks joueurs. **Implémentation DeltaV** : particle billboards GPU avec soft depth fade + sphere-baked normal maps + sorted accumulated opacity + curl noise flow stable (US-040 MVP). **Upgrade Niagara Fluids volumétrique** en polish phase (US-063) si budget GPU permet ; sinon v1 shippé.
 - **LEDs base / consoles** : cool white 4000–5000K + accent bleu ou amber selon fonction (navigation = bleu, alerte = amber, critical = rouge).
 - **HUD overlay** : vert holographique tactical (style Iron Man / Crysis), opacité 60–80%.
 
@@ -749,6 +751,7 @@ Implémenter la séquence de lancement cinématique-mais-jouable : compte à reb
 - [ ] Given thrust = 0 (MECO), when je check, then flamme disparaît en 0.5 s, trail persiste 5–8 s avant fade complet
 - [ ] Given altitude > 80 km (quasi-vide), when je regarde, then fumée disparaît progressivement (expansion libre + manque atmosphère), flamme reste mais s'élargit visiblement (behaviour vacuum expansion)
 - [ ] Given plume + ground smoke + trail rendering complet simultanément, when je profile avec Unreal Insights, then GPU cost total < 2.5 ms/frame sur RTX 4070 Ti Super 1440p
+- [ ] Given ground smoke cloud rendering, when je compare visuellement à une référence screenshot **CS2 dynamic smoke grenade**, then la signature "pillowy dense + soft billowing edges + apparent self-shadowing + turbulence stable fluide" est reconnaissable — même si la technique sous-jacente est particle billboards (pas voxel volumétrique réactif)
 - [ ] **Unhappy path** : Niagara system manquant ou asset non référencé → moteur sans plume + warning log explicite (pas de crash)
 
 #### US-041: Camera shake + HDR bloom pendant ignition
@@ -1110,6 +1113,7 @@ Polish VFX v2 (exhaust advanced, volumetric smoke, stage separation debris), Met
 - [ ] Given max-Q transonique atteint (altitude ~11–13 km, Mach ~1), when traversed, then **Prandtl-Glauert condensation cone** (vapor ring éphémère ~2 s autour du nosecone) visible, puis disparait
 - [ ] Given altitude < 30 km + thrust actif, when je regarde derrière la rocket, then **heat haze distortion** post-process visible (refraction subtile, chromatic aberration contrôlée)
 - [ ] Given total exhaust v2 rendering simultané (volumetric + P-G + heat haze + v1 flame), when je profile, then GPU cost total < 4 ms/frame 1440p sur RTX 4070 Ti Super
+- [ ] Given Niagara Fluids volumetric actif, when side-by-side avec **référence CS2 smoke grenade**, then DeltaV s'approche du look (densité, self-shadowing, bords soft) sans égaler la réactivité dynamique CS2 (pas de trous bullet, pas de dissipation molotov — non pertinent pour un launch pad spatial)
 - [ ] **Unhappy path** : Niagara Fluids perf insuffisante détectée runtime (< 45 fps 3 s consécutives) → fallback automatique à exhaust v1 (billboards) + log info + setting UI user-facing "Volumetric Smoke: Off" pré-coché la prochaine session
 
 #### US-064: MetaSounds ignition + rumble + max-Q buffet + comm chatter
