@@ -18,13 +18,18 @@ public class DeltaV : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
+			"Slate",
+			"SlateCore",
+			"Niagara",
+			"Chaos",
+			"GameplayTags"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"DeltaV",
+			"DeltaV/Player",
 			"DeltaV/Variant_Platforming",
 			"DeltaV/Variant_Platforming/Animation",
 			"DeltaV/Variant_Combat",

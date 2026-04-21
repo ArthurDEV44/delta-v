@@ -4,22 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Logging/LogMacros.h"
-#include "DeltaVCharacter.generated.h"
+#include "ACommanderCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
 struct FInputActionValue;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
-
 /**
- *  A simple player-controllable third person character
- *  Implements a controllable orbiting camera
+ *  Player-controllable third person commander character.
+ *  Base pawn for the DeltaV player while on foot (inside the base, outside, etc.).
  */
 UCLASS(abstract)
-class ADeltaVCharacter : public ACharacter
+class ACommanderCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -30,7 +27,7 @@ class ADeltaVCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-	
+
 protected:
 
 	/** Jump Input Action */
@@ -52,7 +49,7 @@ protected:
 public:
 
 	/** Constructor */
-	ADeltaVCharacter();	
+	ACommanderCharacter();
 
 protected:
 
@@ -93,4 +90,3 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
-
