@@ -63,7 +63,7 @@ The project is **public** for transparency, portfolio visibility, and to share t
 
 ## Inspirations
 
-*Kerbal Space Program* (simulation), *Observation* & *Tacoma* (immersive TPV), *Everspace 2* (juice & game feel), SpaceX livestreams (photorealism & dramatic camera work).
+*Kerbal Space Program* (simulation), *Observation* & *Tacoma* (immersive TPV), *Everspace 2* (juice & game feel), SpaceX livestreams (cinematic clean camera work). Visual direction: **clean PBR realism** — hero asset quality à la *Star Citizen* / *Arena Breakout Infinite* / *PUBG Black Budget*, not gritty photoréalisme.
 
 ## License
 

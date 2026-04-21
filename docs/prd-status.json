@@ -83,7 +83,7 @@
       "title": "Mission Loop Closure & Economy (Phase 9)",
       "status": "TODO",
       "priority": "P0",
-      "stories_total": 5,
+      "stories_total": 6,
       "stories_done": 0
     },
     {
@@ -149,7 +149,7 @@
     { "id": "US-037", "title": "APad launch pad actor + rocket attachment", "epic": "EP-007", "status": "TODO", "priority": "P0", "size": "S", "blocked_by": ["US-014"], "started_at": null, "completed_at": null, "reviewed_at": null },
     { "id": "US-038", "title": "State machine ULaunchSequenceComponent avec 8 phases", "epic": "EP-007", "status": "TODO", "priority": "P0", "size": "L", "blocked_by": ["US-014", "US-037"], "started_at": null, "completed_at": null, "reviewed_at": null },
     { "id": "US-039", "title": "4 cinecams multi-angles façon retransmission", "epic": "EP-007", "status": "TODO", "priority": "P0", "size": "L", "blocked_by": ["US-038"], "started_at": null, "completed_at": null, "reviewed_at": null },
-    { "id": "US-040", "title": "Niagara exhaust plume v1 (placeholder, GPU)", "epic": "EP-007", "status": "TODO", "priority": "P0", "size": "M", "blocked_by": ["US-038"], "started_at": null, "completed_at": null, "reviewed_at": null },
+    { "id": "US-040", "title": "Niagara exhaust v1 — Raptor flame + ground smoke + ascent trail (GPU particle billboards)", "epic": "EP-007", "status": "TODO", "priority": "P0", "size": "L", "blocked_by": ["US-038"], "started_at": null, "completed_at": null, "reviewed_at": null },
     { "id": "US-041", "title": "Camera shake + HDR bloom pendant ignition", "epic": "EP-007", "status": "TODO", "priority": "P1", "size": "S", "blocked_by": ["US-039"], "started_at": null, "completed_at": null, "reviewed_at": null },
     { "id": "US-042", "title": "Orbit insertion stable en Rail à T+~540s", "epic": "EP-007", "status": "TODO", "priority": "P0", "size": "M", "blocked_by": ["US-038", "US-021"], "started_at": null, "completed_at": null, "reviewed_at": null },
 
@@ -171,6 +171,7 @@
     { "id": "US-056", "title": "Save auto post-mission (haut-niveau, pas Chaos state)", "epic": "EP-010", "status": "TODO", "priority": "P0", "size": "M", "blocked_by": ["US-055"], "started_at": null, "completed_at": null, "reviewed_at": null },
     { "id": "US-057", "title": "Widget WBP_MissionComplete avec résumé", "epic": "EP-010", "status": "TODO", "priority": "P0", "size": "M", "blocked_by": ["US-054"], "started_at": null, "completed_at": null, "reviewed_at": null },
     { "id": "US-058", "title": "Test Automation full mission loop end-to-end", "epic": "EP-010", "status": "TODO", "priority": "P1", "size": "L", "blocked_by": ["US-053", "US-056"], "started_at": null, "completed_at": null, "reviewed_at": null },
+    { "id": "US-068", "title": "Vehicle wear accumulation + repair system", "epic": "EP-010", "status": "TODO", "priority": "P1", "size": "M", "blocked_by": ["US-050", "US-054"], "started_at": null, "completed_at": null, "reviewed_at": null },
 
     { "id": "US-059", "title": "UDynamicEventManager + UEventTrigger base framework", "epic": "EP-011", "status": "TODO", "priority": "P1", "size": "L", "blocked_by": ["US-042"], "started_at": null, "completed_at": null, "reviewed_at": null },
     { "id": "US-060", "title": "Event Micrometeoroid shower avec player response window", "epic": "EP-011", "status": "TODO", "priority": "P1", "size": "M", "blocked_by": ["US-059", "US-048"], "started_at": null, "completed_at": null, "reviewed_at": null },

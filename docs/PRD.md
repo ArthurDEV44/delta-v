@@ -6,12 +6,13 @@
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
 | 1.0 | 2026-04-20 | Arthur Jean + Claude Code | Initial draft — MVP vertical slice, 12 phases, 67 stories |
+| 1.1 | 2026-04-21 | Arthur Jean + Claude Code | Art Direction clarification (clean PBR realism, non gritty) ; Niagara exhaust Raptor-style + ground smoke + ascent trail (US-040 size M→L) ; US-050 plasma ionization colors conformes O₂/N₂ ; US-063 refined avec Niagara Fluids + Prandtl-Glauert ; new US-068 vehicle wear accumulation + repair system ; new assumption A7 |
 
 ## Problem Statement
 
 1. **Aucun jeu de gestion d'agence spatiale en 2026 ne combine simulation orbitale crédible, narration immersive à la 3ème personne et pilotage direct de véhicules.** Kerbal Space Program maîtrise la simulation mais a un rendu daté et une narration inexistante. Observation et Tacoma maîtrisent l'immersion TPV mais sont des expériences courtes sans simulation technique. Les jeux de gestion (Mars Horizon, Kerbal Space Academy) restreignent le joueur à une UI cliquable. Le gap : un jeu où le joueur *est* le commandant (TPV, walking-sim dans sa base), puis *pilote* réellement le véhicule qu'il vient de préparer, avec une physique orbitale plausible.
 
-2. **Le développement solo d'un jeu photoréaliste en UE5 C++ est un champ miné de décisions techniques qui tuent les projets.** Précision orbitale long-terme malgré LWC (solver Chaos reste f32), couplage entre physique rigide et orbital propagator, scope explosion sur les VFX Niagara, switching de mode physique cohérent en énergie. Sans PRD explicite et sans tests Automation dès le jour 1, le projet dérive rapidement en démo non-livrable.
+2. **Le développement solo d'un jeu en clean PBR realism sur UE5 C++ est un champ miné de décisions techniques qui tuent les projets.** Précision orbitale long-terme malgré LWC (solver Chaos reste f32), couplage entre physique rigide et orbital propagator, scope explosion sur les VFX Niagara, switching de mode physique cohérent en énergie. Sans PRD explicite et sans tests Automation dès le jour 1, le projet dérive rapidement en démo non-livrable.
 
 3. **Le profil solopreneur avec contraintes parentales réelles exige un plan phasé avec jalons jouables.** Sans découpage explicite, les 30-40 semaines de MVP se transforment en 18 mois de refactoring. Chaque phase doit produire un livrable démo-able, testable, commit-able, shippable sur une branche feature.
 
@@ -24,6 +25,50 @@ DeltaV est un jeu vidéo immersive-sim + management + action-sim développé sur
 La boucle de gameplay enchaîne quatre phases distinctes toutes jouables (aucune cinématique) : (1) **Base TPV** — le joueur marche dans sa base peuplée de MetaHumans crew, interagit avec consoles, dialogue avec l'équipage, configure la mission ; (2) **Lancement épique** — compte à rebours, staging réaliste (ignition, max-Q, MECO, séparation, fairing), cameras multi façon retransmission SpaceX live, shaders de flamme Niagara et volumétriques de fumée ; (3) **Pilotage orbital** — bascule TPV sur le véhicule possédé, burns manuels prograde/retrograde, trajectoire projetée, scan/récolte de cible (astéroïde MVP), évitement débris ; (4) **Rentrée & atterrissage** — physique atmosphérique, plasma ablation via shader HLSL, posé propulsif ou parachute.
 
 L'architecture technique repose sur quatre décisions structurantes : (a) **dual-tier physics** via `UOrbitalComponent` qui switch entre mode `Rail` (Kepler f64 déterministe, longues trajectoires) et mode `Local` (Chaos rigid body activé pour burns/collisions/landing) — non négociable vu que le solver Chaos 5.5 reste f32 en interne ; (b) **orbital core en f64 strict** avec patched conics, Newton-Raphson pour Kepler, intégrateur symplectique Leapfrog en fallback anti-drift ; (c) **Tests Automation Framework obligatoires** sur tout le noyau orbital, SOI, économie, switching rail↔Chaos, avec quality gate CLI headless ; (d) **développement phasé strict** en 12 phases (Phase 0 → Phase 11), chaque phase produit un livrable démo-able et commit-able.
+
+## Art Direction
+
+**Style** : **Clean PBR realism** — "hero asset" quality, marketing-grade. **Not** photoréalisme gritty (Battlefield, Arma 3, Escape From Tarkov worn look). Les assets restent propres, neufs, lisibles — esthétique "showroom SpaceX" ou "Star Citizen Origin showroom".
+
+**Références visuelles** :
+- **Star Citizen** — référence hero asset quality, intérieurs propres industrial, reflets métalliques nets
+- **Arena Breakout Infinite** — clean PBR modern tactical, textures ultra-propres
+- **PUBG Black Budget** — clean PBR tactical moderne
+- **SpaceX interior photography** — Crew Dragon cabine immaculée, Falcon 9 IPC showroom
+- **NASA/ESA modern mission photography** — propre, pro, iconique
+
+### Pillars d'art direction
+
+1. **Showroom fresh par défaut** — tous les assets livrés comme neufs : rockets peinture parfaite, combinaisons crew non-portées, consoles sans rayures, sols propres.
+2. **Cinematic clean lighting** — Lumen Hardware RT, pas de dust haze overdone, pas de lens dirt overlay, pas de chromatic aberration gratuite. La dramatisation vient des **angles caméra** et du **HDR range**, pas des post-effects "artistique-dirty".
+3. **Hero-readable silhouettes** — chaque asset reconnaissable instantanément, pas noyé dans le grunge. Materials simples et lisibles > materials sophistiqués illisibles.
+4. **Earned damage, not baked** — la seule patine autorisée est **gagnée** par gameplay :
+   - **Heat shield ablation** après rentrée atmosphérique (carbon scoring progressif, voir US-068)
+   - **Burn marks** autour des séparateurs d'étages post-staging
+   - **Rien d'autre n'a de wear par défaut**. Pas de poussière "lunaire" baked sur les rovers, pas de rust sur les vieilles rockets.
+5. **Le joueur contrôle la patine** — US-068 permet de payer en ressources pour "repaint" un vehicle et reset son WearLevel. Choix stratégique entre resource sink cosmétique (fusée propre) ou narratif (fusée-trophée).
+
+### Material Authoring Guidelines
+
+- **Roughness targets** : métaux 0.2–0.4 (reflets nets), plastiques 0.5–0.7, tissus 0.7–0.9, heat shield ablated 0.6–0.9 progressif
+- **Master materials** : **pas de dirt/grunge layer** par défaut — ajout opt-in uniquement si narrative justification (wear system, earned damage)
+- **Albedo** : couleurs saturées propres, pas de color variation noise grunge par défaut. Tint subtil max.
+- **Normal maps** : détails de surface (rivets, panel lines, fabric weave) — pas de battle scars ni deep scratches
+- **Metallic** : valeurs 0 (diélectrique) ou 1 (conducteur), pas de semi-metallic grunge
+- **Emissive** : réservé aux LED, displays, flammes moteur, plasma rentrée — pas d'emissive "magical glow" gratuit
+
+### VFX Color Language (signature DeltaV)
+
+- **Niagara exhaust** (moteurs actifs, décollage/burn) : **Raptor-style** — cœur bleu profond HDR avec **mach diamonds orange** visibles. Référence : SpaceX Starship static fire livestreams.
+- **Plasma ablation** (rentrée atmosphérique) : **orange-rouge (émission O₂) + rose (émission N₂) + bleu-blanc (dissociation haute-énergie)** — conforme à l'ionisation atmosphérique réelle Space Shuttle / Dragon.
+- **LEDs base / consoles** : cool white 4000–5000K + accent bleu ou amber selon fonction (navigation = bleu, alerte = amber, critical = rouge).
+- **HUD overlay** : vert holographique tactical (style Iron Man / Crysis), opacité 60–80%.
+
+### Asset Sourcing Strategy
+
+- **80% sourcing externe** : Fab Marketplace (ex-Quixel Bridge) / Quixel Megascans **filter "clean industrial"** / propres. Éviter les kits "battle-worn", "post-apocalyptic", "Chernobyl ruins".
+- **20% custom modeling** : réservé aux assets signatures — uniforme crew agency, logos, hero model de la fusée finale Phase 11, cockpit control consoles principales.
+- **MetaHumans** : presets "clean corporate" / "space crew" avec uniformes neufs. Pas de scars, pas de weathered skin, pas de hair mess. Groom subtil.
 
 ## Goals
 
@@ -42,7 +87,7 @@ L'architecture technique repose sur quatre décisions structurantes : (a) **dual
 - **Behaviors** : sessions de 60-90 minutes en soirée ou weekend. Préfère les jeux à forte identité visuelle et narrative plutôt que les grinders. Lit les patch notes, regarde les lancements SpaceX en live. Commente sur Reddit r/KerbalSpaceProgram et r/spacex.
 - **Pain points** : KSP est techniquement brillant mais graphiquement daté et sans narration ; les jeux narratifs spatiaux (Observation) durent 4h et sont rejouabilité zéro ; les jeux de gestion spatiale (Mars Horizon) restreignent à une UI sans incarnation. Aucun jeu ne lui donne *à la fois* l'immersion TPV et la sim orbitale crédible.
 - **Current workaround** : alterne entre KSP (sim pure), Everspace 2 (pilotage juteux mais pas de gestion), et films documentaires / livestreams SpaceX (consommation passive).
-- **Success looks like** : peut raconter à un ami "j'ai préparé ma mission, briefé mon équipe, regardé ma fusée décoller sous tous les angles, piloté jusqu'à un astéroïde, ramené des échantillons, et débloqué un nouveau moteur" — en une session de 90 minutes et en photoréalisme.
+- **Success looks like** : peut raconter à un ami "j'ai préparé ma mission, briefé mon équipe, regardé ma fusée décoller sous tous les angles, piloté jusqu'à un astéroïde, ramené des échantillons, et débloqué un nouveau moteur" — en une session de 90 minutes avec un rendu clean PBR cinématique (style Star Citizen / Arena Breakout Infinite).
 
 ### Joueur secondaire — "Le streamer tech / science"
 
@@ -64,13 +109,13 @@ L'architecture technique repose sur quatre décisions structurantes : (a) **dual
 
 ### Competitive Context
 
-- **Kerbal Space Program 1 & 2** : référence simulation orbitale patched conics, tech tree, base building basique. KSP1 graphiquement daté, KSP2 en development hell. **DeltaV se différencie par** : TPV walking-sim dans la base + MetaHumans crew + photoréalisme UE5 natif + narration environnementale.
+- **Kerbal Space Program 1 & 2** : référence simulation orbitale patched conics, tech tree, base building basique. KSP1 graphiquement daté, KSP2 en development hell. **DeltaV se différencie par** : TPV walking-sim dans la base + MetaHumans crew + clean PBR realism UE5 natif + narration environnementale.
 - **Observation / Tacoma** : référence ambiance TPV station spatiale, interactions consoles, storytelling environnemental. Pas de simulation technique. **DeltaV étend** : le walking-sim débouche sur du pilotage réel de fusée/satellite avec physique orbitale crédible.
 - **Mars Horizon** : gestion d'agence spatiale en 2D UI cliquable. **DeltaV remplace** la UI par un niveau 3D walkable + dialogue crew MetaHuman.
 - **Everspace 2** : référence juice / game feel pilotage spatial. Pas de sim orbital, pas de base. **DeltaV emprunte** le juice (camera shake, impact feedback, HDR bloom) pour les phases orbital et reentry.
 - **SpaceX livestreams officiels** : référence esthétique lancement (cameras multi, overlay télémétrie, échelle dramatique). **DeltaV reproduit** cette esthétique en temps réel jouable.
 
-**Market gap** : aucun jeu ne combine simulation orbitale crédible + narration immersive TPV + pilotage direct photoréaliste. DeltaV occupe ce créneau.
+**Market gap** : aucun jeu ne combine simulation orbitale crédible + narration immersive TPV + pilotage direct en clean PBR realism. DeltaV occupe ce créneau.
 
 ### Best Practices Applied
 
@@ -94,6 +139,7 @@ L'architecture technique repose sur quatre décisions structurantes : (a) **dual
 - **A4** : Chaos Physics 5.5 restore proprement via snapshot position + rotation + velocities seulement (sans solver internal state). Workaround documenté mais à tester. À valider Phase 3.
 - **A5** : Le switching rail↔Chaos prend < 1 frame et ne perd pas > 0.1% d'énergie cinétique. À valider Phase 3.
 - **A6** : Mountea Dialogue System reste maintenu jusqu'en 2027 et supporte UE 5.5+ nativement. À vérifier au moment de l'adoption Phase 5.
+- **A7** : Clean PBR asset sourcing via Fab Marketplace / Quixel Megascans suffit pour 80% des meshes MVP (rockets, consoles, base interior, props). Custom modeling réservé aux assets signatures : uniformes crew, logos agency, hero model rocket final, consoles principales control room. À valider Phase 2.
 
 ### Hard Constraints
 
@@ -689,18 +735,21 @@ Implémenter la séquence de lancement cinématique-mais-jouable : compte à reb
 - [ ] Given input joueur "V" à tout moment, when pressé, then cycle manuel entre les 4 cameras
 - [ ] **Unhappy path** : camera target détruite pendant son usage → fallback PadCam
 
-#### US-040: Niagara exhaust plume v1 (placeholder, GPU)
-**Description** : As a dev, I want un `NS_RocketExhaust` Niagara GPU system avec particules + glow HDR attaché au stage moteur pendant thrust > 0 so that la rocket ait un feu visible.
+#### US-040: Niagara exhaust v1 — Raptor flame + ground smoke + ascent trail (GPU particle billboards)
+**Description** : As a dev, I want un `NS_RocketExhaust` Niagara GPU system qui combine (a) flamme Raptor-style bleue avec mach diamonds orange au niveau des nozzles, (b) ground smoke cloud radial au pad pendant ignition, (c) trail vertical de fumée/vapeur pendant l'ascension, attaché au stage moteur so that le décollage ait un feeling SpaceX-live dramatic — sans Niagara Fluids volumétrique (réservé au polish v2, US-063).
 
 **Priority** : P0
-**Size** : M (3 pts)
+**Size** : L (5 pts)
 **Dependencies** : Blocked by US-038
 
 **Acceptance Criteria** :
-- [ ] Given thrust actif, when je regarde le moteur, then plume de particules visible avec emissive HDR orange/bleu
-- [ ] Given thrust = 0 (MECO), when je check, then plume disparaît en 0.5s avec trail
-- [ ] Given plume rendering, when je profile, then GPU cost < 1.5 ms/frame sur RTX 4070 Ti Super 1440p
-- [ ] **Unhappy path** : Niagara system manquant → moteur sans plume + warning log (pas de crash)
+- [ ] Given thrust actif, when je regarde la nozzle, then flamme **Raptor-style** : cœur bleu profond HDR (emissive ~5000 K) avec **mach diamonds orange** nets et shock-diamond pattern alternés le long du plume (référence visuelle : Starship static fire livestreams SpaceX)
+- [ ] Given ignition au pad, when T=0 à T+20 s, then **ground smoke cloud** radial (particle billboards + soft-depth fade, ~50 m de diamètre, self-occlusion via normal maps) s'étend autour du pad puis se dissipe progressivement
+- [ ] Given ascension < 30 km altitude, when je regarde depuis tracking cam, then **trail vertical** de fumée/vapeur derrière la rocket (particle billboards, ~500 m long, fade temporel + dispersion latérale par turbulence)
+- [ ] Given thrust = 0 (MECO), when je check, then flamme disparaît en 0.5 s, trail persiste 5–8 s avant fade complet
+- [ ] Given altitude > 80 km (quasi-vide), when je regarde, then fumée disparaît progressivement (expansion libre + manque atmosphère), flamme reste mais s'élargit visiblement (behaviour vacuum expansion)
+- [ ] Given plume + ground smoke + trail rendering complet simultanément, when je profile avec Unreal Insights, then GPU cost total < 2.5 ms/frame sur RTX 4070 Ti Super 1440p
+- [ ] **Unhappy path** : Niagara system manquant ou asset non référencé → moteur sans plume + warning log explicite (pas de crash)
 
 #### US-041: Camera shake + HDR bloom pendant ignition
 **Description** : As a dev, I want un `UCameraShakeBase` déclenché à ignition + intensité proportionnelle au thrust so that le joueur ressente la puissance.
@@ -845,7 +894,7 @@ Rentrée atmosphérique avec plasma ablation via shader HLSL, drag atmosphériqu
 **Dependencies** : Blocked by US-049
 
 **Acceptance Criteria** :
-- [ ] Given velocity > 3 km/s + altitude entre 60-80 km, when je regarde le vehicle, then glow plasma orange/bleu visible sur le heat shield
+- [ ] Given velocity > 3 km/s + altitude entre 60–80 km, when je regarde le vehicle, then glow plasma **conforme à l'ionisation atmosphérique réelle** : orange-rouge (émission O₂) + rose (émission N₂) + bleu-blanc haute énergie (dissociation), visible sur le heat shield. Référence : imagerie Space Shuttle / Crew Dragon rentrée.
 - [ ] Given dynamic parameter `Temperature` 0-3000 K, when temperature monte, then couleur shift vers blanc-bleu HDR
 - [ ] Given heat shield ablation, when temperature > 2500 K trop longtemps, then warning "hull breach imminent" + HP du vehicle diminue
 - [ ] Given plasma active, when je profile, then shader cost < 0.8 ms/frame 1440p
@@ -963,6 +1012,23 @@ Fermer la boucle 4-phases : mission result screen, `UResourceLedger` qui ajoute 
 - [ ] Given save fichier, when reload, then state restauré
 - [ ] **Unhappy path** : test stuck dans une phase (ex: atterrissage échoue) → fail + log la phase bloquante
 
+#### US-068: Vehicle wear accumulation + repair system
+**Description** : As a player, I want que mon vehicle accumule des marques visibles (carbon scoring heat shield, burn marks autour des séparateurs) à chaque rentrée atmosphérique, et je peux payer en ressources pour le repeindre so that je développe un attachement progressif à mes vehicles-trophées (choix narratif "fusée vétéran") tout en ayant un resource sink cosmétique stratégique (choix économique "repaint propre").
+
+**Priority** : P1
+**Size** : M (3 pts)
+**Dependencies** : Blocked by US-050, US-054
+
+**Acceptance Criteria** :
+- [ ] Given un `UVehicleWearComponent` attaché à tout `AVehicle`, when le vehicle spawn pour la première fois, then `WearLevel` est initialisé à 0.0 (neuf sortie usine) et la valeur est persistée par instance dans le save post-mission
+- [ ] Given rentrée atmosphérique terminée + atterrissage réussi, when vehicle atteint le sol, then `WearLevel += SeverityOfReentry * 0.15` (capé à 1.0). `SeverityOfReentry` calculé depuis `peakTemperatureKelvin × durationAboveAblationThreshold`, normalisé [0,1].
+- [ ] Given `WearLevel > 0`, when vehicle rendu dans la scène, then master material mixe une **wear mask texture** (carbon scoring sur heat shield, burn marks sur nosecone et autour des séparateurs d'étages) avec intensité proportionnelle à `WearLevel`. À `WearLevel = 1.0`, le vehicle montre patine maximale (heat shield noirci complet, nosecone marqué)
+- [ ] Given base hangar console interactable, when j'interact, then widget `WBP_VehicleMaintenance` liste mes vehicles possédés avec : nom, missions volées, `WearLevel` affiché en %, coût de repaint calculé (formule : `baseCost_AlliageMetal + WearLevel × costMultiplier_AlliageMetal`, + composants électroniques proportionnels)
+- [ ] Given ressources suffisantes dans `UResourceLedger`, when je clique "Repaint" sur un vehicle, then confirmation dialog → `WearLevel` reset à 0.0 + ressources déduites atomiquement + event `OnVehicleRepainted(Vehicle)` broadcast + save auto déclenché
+- [ ] Given ressources insuffisantes, when je tente "Repaint", then bouton grisé + breakdown affiché "manque X alliages métal, Y composants électroniques" + pas de mutation state
+- [ ] Given un vehicle avec plusieurs rentrées + save/reload session, when je recharge, then `WearLevel` persiste correctement (pas de reset à 0 au chargement)
+- [ ] **Unhappy path** : vehicle déjà à `WearLevel = 1.0` (cap atteint), when nouvelle rentrée, then pas d'overflow (reste à 1.0) et HUD affiche "Vehicle at max wear — repaint recommended" en post-mission screen
+
 ---
 
 ### EP-011: Dynamic Events v1 (Phase 10)
@@ -1032,18 +1098,19 @@ Polish VFX v2 (exhaust advanced, volumetric smoke, stage separation debris), Met
 
 **Definition of Done** : je package en Shipping Win64, j'installe sur un laptop tiers Windows, je lance, le jeu tourne avec Steam overlay + 1 achievement "first successful mission" déclenché. VFX et audio passent le "wow" test.
 
-#### US-063: Niagara exhaust v2 (volumetric smoke + heat haze)
-**Description** : As a dev, I want le `NS_RocketExhaust` upgradé avec volumetric smoke + heat distortion post-process so that le lancement ait un feeling dramatic.
+#### US-063: Niagara exhaust v2 — upgrade Niagara Fluids volumétrique + Prandtl-Glauert + heat haze
+**Description** : As a dev, I want le `NS_RocketExhaust` upgradé depuis particle billboards v1 vers (a) **Niagara Fluids volumétrique** pour ground smoke + (b) **Prandtl-Glauert condensation cone** à max-Q transonique + (c) **heat haze post-process** en basse atmosphère, avec fallback automatique à v1 si perf insuffisante so that le lancement passe en qualité SpaceX-live cinématique sans sacrifier le frame budget.
 
 **Priority** : P1
 **Size** : L (5 pts)
 **Dependencies** : Blocked by US-040
 
 **Acceptance Criteria** :
-- [ ] Given lancement, when je regarde exhaust, then smoke volumetric visible autour du pad pendant ignition (3s)
-- [ ] Given thrust continu, when je regarde, then plume longue, heat haze derrière la rocket
-- [ ] Given profile, when mesuré, then total exhaust GPU cost < 3 ms/frame 1440p
-- [ ] **Unhappy path** : volumetric clouds désactivés (low-end detection) → fallback à exhaust v1 + log info
+- [ ] Given ignition au pad, when je regarde, then **ground smoke cloud Niagara Fluids volumétrique** (remplace v1 billboard) s'étend ~80 m, self-shadows cohérent avec Lumen HW RT
+- [ ] Given max-Q transonique atteint (altitude ~11–13 km, Mach ~1), when traversed, then **Prandtl-Glauert condensation cone** (vapor ring éphémère ~2 s autour du nosecone) visible, puis disparait
+- [ ] Given altitude < 30 km + thrust actif, when je regarde derrière la rocket, then **heat haze distortion** post-process visible (refraction subtile, chromatic aberration contrôlée)
+- [ ] Given total exhaust v2 rendering simultané (volumetric + P-G + heat haze + v1 flame), when je profile, then GPU cost total < 4 ms/frame 1440p sur RTX 4070 Ti Super
+- [ ] **Unhappy path** : Niagara Fluids perf insuffisante détectée runtime (< 45 fps 3 s consécutives) → fallback automatique à exhaust v1 (billboards) + log info + setting UI user-facing "Volumetric Smoke: Off" pré-coché la prochaine session
 
 #### US-064: MetaSounds ignition + rumble + max-Q buffet + comm chatter
 **Description** : As a dev, I want des MetaSound sources attachées à la rocket + PlayerController pour ignition bass drop + continuous rumble + max-Q high-frequency buffet + comm chatter voice samples so that l'audio soit immersif.
