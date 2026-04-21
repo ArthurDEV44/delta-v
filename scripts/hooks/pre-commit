@@ -1,0 +1,87 @@
+#!/bin/sh
+# ============================================================================
+# DeltaV — pre-commit hook
+# Rejects any staged binary file > 100 KB that is not tracked by Git LFS.
+# Ships with the repo (activated via `git config core.hooksPath scripts/hooks`).
+# POSIX sh so it works identically in git-bash on Windows and on Unix.
+# ============================================================================
+
+set -u
+
+SIZE_LIMIT=102400   # 100 KB in bytes
+bad=0
+
+# List of added/modified/copied files in the staging area. --diff-filter=ACM
+# omits deletions (D), renames (R) that don't introduce new content, and type
+# changes (T). The output is newline-delimited; filenames with embedded newlines
+# are extremely rare and accepted as out of scope.
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Empty staging (e.g. amend without changes) — nothing to check.
+[ -z "$staged" ] && exit 0
+
+# Iterate via here-doc so the `bad` flag set inside the loop survives (piping
+# `... | while read` creates a subshell in POSIX, which would lose the flag).
+while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    [ -f "$file" ] || continue
+
+    # File size in bytes. `wc -c < file` is the most portable form; it avoids
+    # stat's platform-specific flags (-c on GNU, -f on BSD).
+    size=$(wc -c < "$file" | tr -d ' \t')
+    [ -z "$size" ] && continue
+    [ "$size" -le "$SIZE_LIMIT" ] && continue
+
+    # Only enforce the LFS rule on actual binaries. Large markdown, JSON, CSV,
+    # source files etc. are fine without LFS. `git diff --cached --numstat`
+    # prints "-" in both added/removed columns for binary blobs, and real line
+    # counts for text.
+    is_binary=$(git diff --cached --numstat -- "$file" 2>/dev/null | awk 'NR==1{print $1}')
+    [ "$is_binary" != "-" ] && continue
+
+    # Large file: must be LFS-tracked. `git check-attr filter` returns one of:
+    #   <path>: filter: lfs          → tracked by LFS
+    #   <path>: filter: unspecified  → not tracked
+    #   <path>: filter: <other>      → different filter (not LFS)
+    filter=$(git check-attr filter -- "$file" | sed 's/.*: //')
+
+    if [ "$filter" != "lfs" ]; then
+        if [ "$bad" = 0 ]; then
+            echo "" >&2
+            echo "ERROR: pre-commit hook rejected this commit." >&2
+            echo "" >&2
+        fi
+        human_size=$((size / 1024))
+        echo "  * ${file}" >&2
+        echo "      size: ${human_size} KB (> 100 KB threshold)" >&2
+        echo "      filter: ${filter}  <-- expected: lfs" >&2
+        bad=1
+    fi
+done <<EOF
+${staged}
+EOF
+
+if [ "$bad" -ne 0 ]; then
+    cat >&2 <<'MSG'
+
+One or more binary files above the 100 KB threshold are not tracked by Git LFS.
+This would bloat the repository and degrade clone/push performance.
+
+Fix:
+  1. Add the file's extension to .gitattributes with an LFS filter pattern:
+         <extension> filter=lfs diff=lfs merge=lfs -text
+     See existing entries in .gitattributes for reference.
+  2. Re-stage the file so LFS picks it up:
+         git rm --cached <file> && git add <file>
+  3. Verify with:
+         git check-attr filter -- <file>      # should print: filter: lfs
+  4. Retry the commit.
+
+If the file must genuinely be committed in-repo (e.g. a 150 KB .ini config),
+move it out of the staging area or negotiate an exception — do NOT bypass this
+hook with --no-verify.
+
+MSG
+fi
+
+exit "$bad"
