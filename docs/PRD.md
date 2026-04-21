@@ -8,6 +8,7 @@
 | 1.0 | 2026-04-20 | Arthur Jean + Claude Code | Initial draft — MVP vertical slice, 12 phases, 67 stories |
 | 1.1 | 2026-04-21 | Arthur Jean + Claude Code | Art Direction clarification (clean PBR realism, non gritty) ; Niagara exhaust Raptor-style + ground smoke + ascent trail (US-040 size M→L) ; US-050 plasma ionization colors conformes O₂/N₂ ; US-063 refined avec Niagara Fluids + Prandtl-Glauert ; new US-068 vehicle wear accumulation + repair system ; new assumption A7 |
 | 1.2 | 2026-04-21 | Arthur Jean + Claude Code | Smoke visual reference = **Counter-Strike 2 dynamic smoke** (silhouette pillowy, soft edges, self-shadowing). Visuel uniquement — implémentation MVP = particle billboards (pas voxel volumétrique CS2), upgrade Niagara Fluids en polish phase. US-040 + US-063 AC side-by-side visual comparison ajoutées. |
+| 1.3 | 2026-04-21 | Arthur Jean + Claude Code | **Engine version bump UE 5.5 → UE 5.7+** (currently installed/tested: 5.7.4). Floor = 5.7, newer minor versions auto-accepted but require re-running full Automation suite. HC1 rewritten to reflect "always-latest" policy. Assumption **A6** + Risk **5**/**10** flag Mountea Dialogue System + GenericGraph as requiring plugin re-validation against 5.7 (originally validated against 5.5). Visual Studio toolchain stays **VS 2022** (not VS 2026 — Epic still marks VS 2026 C++ support as WIP for UE 5.8, UAT breaks with C++ builds per forums.unrealengine.com/t/is-visual-studio-2026-planned-to-be-supported-by-uat/2704866). |
 
 ## Problem Statement
 
@@ -17,15 +18,15 @@
 
 3. **Le profil solopreneur avec contraintes parentales réelles exige un plan phasé avec jalons jouables.** Sans découpage explicite, les 30-40 semaines de MVP se transforment en 18 mois de refactoring. Chaque phase doit produire un livrable démo-able, testable, commit-able, shippable sur une branche feature.
 
-**Why now** : UE 5.5 consolide les technologies qui rendent ce projet jouable en solo (Lumen HW RT mature, Nanite stable, LWC industrialisé, MetaHumans accessibles, Niagara GPU puissant). Hardware consumer 2026 (Ryzen 7 7800X3D + RTX 4070 Ti Super + 32 GB DDR5) soutient sans compromis Lumen + Nanite + MetaHumans + Volumetric Clouds. La fenêtre technique est ouverte, mais sans PRD structuré le temps solo du dev se disperse.
+**Why now** : UE 5.7+ consolide les technologies qui rendent ce projet jouable en solo (Lumen HW RT mature, MegaLights stable, Nanite industrialisé, LWC production-ready, MetaHumans accessibles, Niagara GPU puissant). Hardware consumer 2026 (Ryzen 7 7800X3D + RTX 4070 Ti Super + 32 GB DDR5) soutient sans compromis Lumen + Nanite + MetaHumans + Volumetric Clouds. La fenêtre technique est ouverte, mais sans PRD structuré le temps solo du dev se disperse.
 
 ## Overview
 
-DeltaV est un jeu vidéo immersive-sim + management + action-sim développé sur Unreal Engine 5.5 en C++, distribué en exécutable Steam pour Windows. Le joueur incarne le commandant d'une agence spatiale type NASA/SpaceX en vue à la 3ème personne. Il fait croître son agence au fil des missions, exclusivement par butin récolté (ressources, données scientifiques, artefacts) — pas de grind, pas de monnaie IAP.
+DeltaV est un jeu vidéo immersive-sim + management + action-sim développé sur Unreal Engine 5.7+ (testé 5.7.4) en C++, distribué en exécutable Steam pour Windows. Le joueur incarne le commandant d'une agence spatiale type NASA/SpaceX en vue à la 3ème personne. Il fait croître son agence au fil des missions, exclusivement par butin récolté (ressources, données scientifiques, artefacts) — pas de grind, pas de monnaie IAP.
 
 La boucle de gameplay enchaîne quatre phases distinctes toutes jouables (aucune cinématique) : (1) **Base TPV** — le joueur marche dans sa base peuplée de MetaHumans crew, interagit avec consoles, dialogue avec l'équipage, configure la mission ; (2) **Lancement épique** — compte à rebours, staging réaliste (ignition, max-Q, MECO, séparation, fairing), cameras multi façon retransmission SpaceX live, shaders de flamme Niagara et volumétriques de fumée ; (3) **Pilotage orbital** — bascule TPV sur le véhicule possédé, burns manuels prograde/retrograde, trajectoire projetée, scan/récolte de cible (astéroïde MVP), évitement débris ; (4) **Rentrée & atterrissage** — physique atmosphérique, plasma ablation via shader HLSL, posé propulsif ou parachute.
 
-L'architecture technique repose sur quatre décisions structurantes : (a) **dual-tier physics** via `UOrbitalComponent` qui switch entre mode `Rail` (Kepler f64 déterministe, longues trajectoires) et mode `Local` (Chaos rigid body activé pour burns/collisions/landing) — non négociable vu que le solver Chaos 5.5 reste f32 en interne ; (b) **orbital core en f64 strict** avec patched conics, Newton-Raphson pour Kepler, intégrateur symplectique Leapfrog en fallback anti-drift ; (c) **Tests Automation Framework obligatoires** sur tout le noyau orbital, SOI, économie, switching rail↔Chaos, avec quality gate CLI headless ; (d) **développement phasé strict** en 12 phases (Phase 0 → Phase 11), chaque phase produit un livrable démo-able et commit-able.
+L'architecture technique repose sur quatre décisions structurantes : (a) **dual-tier physics** via `UOrbitalComponent` qui switch entre mode `Rail` (Kepler f64 déterministe, longues trajectoires) et mode `Local` (Chaos rigid body activé pour burns/collisions/landing) — non négociable vu que le solver Chaos reste f32 en interne (inchangé UE 5.5 → 5.7+) ; (b) **orbital core en f64 strict** avec patched conics, Newton-Raphson pour Kepler, intégrateur symplectique Leapfrog en fallback anti-drift ; (c) **Tests Automation Framework obligatoires** sur tout le noyau orbital, SOI, économie, switching rail↔Chaos, avec quality gate CLI headless ; (d) **développement phasé strict** en 12 phases (Phase 0 → Phase 11), chaque phase produit un livrable démo-able et commit-able.
 
 ## Art Direction
 
@@ -122,8 +123,8 @@ L'architecture technique repose sur quatre décisions structurantes : (a) **dual
 ### Best Practices Applied
 
 - **Patched conics avec Kepler f64 + SOI switching** (référence : KSP postmortem, papier Battin "An Introduction to the Mathematics and Methods of Astrodynamics") — aligné.
-- **Floating origin / origin rebasing** même avec LWC UE5 activé (confirmé par forums Epic 5.5 : solver Chaos reste f32 en interne, jitter apparaît > 10 km) — critical.
-- **Automation Framework obligatoire** dès le jour 1 avec `IMPLEMENT_SIMPLE_AUTOMATION_TEST` + flags `ApplicationContextMask|ProductFilter` + CLI headless `-NullRHI` (docs Epic UE 5.5) — adopté.
+- **Floating origin / origin rebasing** même avec LWC UE5 activé (confirmé par forums Epic 5.5→5.7 : solver Chaos reste f32 en interne, jitter apparaît > 10 km) — critical.
+- **Automation Framework obligatoire** dès le jour 1 avec `IMPLEMENT_SIMPLE_AUTOMATION_TEST` + flags `ApplicationContextMask|ProductFilter` + CLI headless `-NullRHI` (docs Epic UE 5.7+) — adopté.
 - **Online Subsystem Steam builtin** suffit pour solo single-player (Epic docs, community tutorials). Gotcha confirmé : `steam_appid.txt` à côté de l'exe en Shipping, Steam doit tourner en dev.
 - **MetaHuman Animator runtime audio** pour lipsync in-game (Epic docs, Epic Community tutorial 2025), fallback Runtime MetaHuman Lip Sync (georgy.dev) si perf.
 - **Mountea Dialogue System** (open-source, maintenu, graph editor dans UE editor, Decorators conditions gameplay) pour le dialog data-driven.
@@ -138,14 +139,14 @@ L'architecture technique repose sur quatre décisions structurantes : (a) **dual
 - **A1** : Les 200 calculs Kepler par frame (60 vehicles simulés en rail) tiennent en moins de 2 ms CPU sur Ryzen 7 7800X3D. À valider dès Phase 1.
 - **A2** : Lumen Hardware RT + Nanite + 3 MetaHumans crew en base tiennent 60 fps en 1440p sur RTX 4070 Ti Super. À valider fin Phase 5.
 - **A3** : L'intégrateur Newton-Raphson suffit pour des orbites courtes (< 10 révolutions LEO) ; Leapfrog symplectique sera adopté pour les orbites longues si drift > 10 m. À valider Phase 1.
-- **A4** : Chaos Physics 5.5 restore proprement via snapshot position + rotation + velocities seulement (sans solver internal state). Workaround documenté mais à tester. À valider Phase 3.
+- **A4** : Chaos Physics (UE 5.7+) restore proprement via snapshot position + rotation + velocities seulement (sans solver internal state). Workaround documenté mais à tester. À valider Phase 3.
 - **A5** : Le switching rail↔Chaos prend < 1 frame et ne perd pas > 0.1% d'énergie cinétique. À valider Phase 3.
-- **A6** : Mountea Dialogue System reste maintenu jusqu'en 2027 et supporte UE 5.5+ nativement. À vérifier au moment de l'adoption Phase 5.
+- **A6** : Mountea Dialogue System reste maintenu jusqu'en 2027. **Compat UE 5.7 à re-valider** (v2.x était confirmée sur 5.5 ; le bump vers 5.7 nécessite re-check marketplace version ou fork si abandonné). À vérifier au moment de l'adoption Phase 5.
 - **A7** : Clean PBR asset sourcing via Fab Marketplace / Quixel Megascans suffit pour 80% des meshes MVP (rockets, consoles, base interior, props). Custom modeling réservé aux assets signatures : uniformes crew, logos agency, hero model rocket final, consoles principales control room. À valider Phase 2.
 
 ### Hard Constraints
 
-- **HC1** : UE 5.5.x uniquement, pas de port vers 5.6+ avant MVP stable.
+- **HC1** : UE 5.7+ (currently installed: 5.7.4). Politique "always-latest" — les minor upgrades (5.8, 5.9…) sont acceptés **post-MVP** et **déclenchent re-run obligatoire** de la full Automation suite (US-011, US-012, US-018, US-022, US-053, US-058, US-067) avant de bumper sur `main`. Pas de downgrade vers 5.5/5.6. Toolchain : VS 2022 (pas VS 2026 — UAT C++ support encore WIP Epic, target UE 5.8).
 - **HC2** : Développement sur Windows 11 Pro exclusivement. Linux Fedora = OS personnel, aucun build UE5 dessus.
 - **HC3** : C++ pour toute la logique métier. Blueprints tolérés uniquement pour : UI widgets (UMG), level scripting non-critique, Niagara triggers, configuration data-driven de variantes de vehicles.
 - **HC4** : Pas de multijoueur, pas de serveur backend, pas d'analytics tierces (RGPD simple pour éviter un PRD juridique).
@@ -173,12 +174,12 @@ For gameplay / UI stories, additional gates:
 
 ### EP-001: Setup & Foundations (Phase 0)
 
-Créer le socle projet : UE 5.5 C++, Git + LFS, structure Source, premier test Automation qui passe, commandant TPV qui marche dans un level vide.
+Créer le socle projet : UE 5.7+ C++, Git + LFS, structure Source, premier test Automation qui passe, commandant TPV qui marche dans un level vide.
 
 **Definition of Done** : le dev ouvre `DeltaV.uproject` sur Windows 11 Pro, appuie PIE, incarne le commandant dans un level vide, un test Automation Kepler passe en CLI headless, commit initial propre.
 
 #### US-001: Environnement de dev Windows installé et validé
-**Description** : As a dev, I want Visual Studio 2022 + UE 5.5.x + Git LFS installés et fonctionnels sur le SSD Windows 11 Pro so that je peux démarrer le développement UE5 C++ sans bloquer.
+**Description** : As a dev, I want Visual Studio 2022 + UE 5.7+ (tested 5.7.4) + Git LFS installés et fonctionnels sur le SSD Windows 11 Pro so that je peux démarrer le développement UE5 C++ sans bloquer.
 
 **Priority** : P0
 **Size** : S (2 pts)
@@ -188,18 +189,18 @@ Créer le socle projet : UE 5.5 C++, Git + LFS, structure Source, premier test A
 - [ ] Given Windows 11 Pro fraîchement installé, when je lance `devenv.exe /?`, then Visual Studio 2022 17.10+ est installé avec workloads "Game development with C++" et "Desktop C++" et Windows 10 SDK
 - [ ] Given VS 2022 installé, when je crée un projet UE C++ test, then la compile passe sans erreur toolchain
 - [ ] Given Git for Windows installé, when je tape `git lfs install` puis `git lfs version`, then Git LFS 3.5+ répond
-- [ ] Given driver NVIDIA Studio, when je regarde le panneau NVIDIA, then version driver >= 560.x (support UE 5.5 Lumen HW RT)
-- [ ] **Unhappy path** : si Epic Games Launcher refuse d'installer UE 5.5, capturer le log d'erreur `%LOCALAPPDATA%\EpicGamesLauncher\Saved\Logs` et le commit dans `docs/environment-setup.md`
+- [ ] Given driver NVIDIA Studio, when je regarde le panneau NVIDIA, then version driver >= 560.x (support UE 5.7+ Lumen HW RT + MegaLights)
+- [ ] **Unhappy path** : si Epic Games Launcher refuse d'installer UE 5.7+, capturer le log d'erreur `%LOCALAPPDATA%\EpicGamesLauncher\Saved\Logs` et le commit dans `docs/environment-setup.md`
 
 #### US-002: Projet UE5 C++ créé avec template Third Person
-**Description** : As a dev, I want un projet UE 5.5.x C++ nommé `DeltaV` créé depuis le template Third Person so that je bénéficie de `ACharacter` + Enhanced Input gratuits au lieu de repartir de zéro.
+**Description** : As a dev, I want un projet UE 5.7+ C++ nommé `DeltaV` créé depuis le template Third Person so that je bénéficie de `ACharacter` + Enhanced Input gratuits au lieu de repartir de zéro.
 
 **Priority** : P0
 **Size** : S (2 pts)
 **Dependencies** : Blocked by US-001
 
 **Acceptance Criteria** :
-- [ ] Given UE 5.5.x installé, when je crée un nouveau projet C++ Third Person nommé `DeltaV`, then le projet compile en Development Editor et PIE charge le level template
+- [ ] Given UE 5.7+ installé, when je crée un nouveau projet C++ Third Person nommé `DeltaV`, then le projet compile en Development Editor et PIE charge le level template
 - [ ] Given le projet créé, when je lance PIE, then je peux déplacer le mannequin avec WASD + souris sans crash
 - [ ] Given PIE actif, when je check `Saved/Logs/DeltaV.log`, then aucune erreur fatale n'est loggée
 - [ ] **Unhappy path** : si la compile échoue, le log complet MSBuild est capturé dans `Saved/Logs/compile-errors.log` et committé
@@ -647,7 +648,7 @@ Intégrer 2-3 MetaHumans crew dans la base avec animations idle/walk placeholder
 - [ ] Given plugin installed, when je rebuild project, then compile passe et "Mountea Dialogue" apparaît dans l'éditeur (Content Browser filter)
 - [ ] Given un `UMounteaDialogueGraph` créé, when je double-click, then l'éditeur graph custom s'ouvre
 - [ ] Given graph avec 3 nodes (Start → Reply → End), when je valide, then le graph est valide (pas d'erreurs de validation)
-- [ ] **Unhappy path** : version plugin incompatible avec UE 5.5 → log error explicite avec version attendue dans `docs/plugin-versions.md`
+- [ ] **Unhappy path** : version plugin incompatible avec UE 5.7+ → log error explicite avec version attendue dans `docs/plugin-versions.md`
 
 #### US-034: Arbre de dialogue "Mission briefing" Chief Engineer
 **Description** : As a dev, I want un `UMounteaDialogueGraph_Briefing` de 8-10 nodes avec 2-3 branches joueur (questions techniques, skip direct, confirmation) so that le joueur ait une interaction narrative avec le chief engineer avant mission.
@@ -1163,7 +1164,7 @@ Polish VFX v2 (exhaust advanced, volumetric smoke, stage separation debris), Met
 **Dependencies** : Blocked by US-058
 
 **Acceptance Criteria** :
-- [ ] Given le script run sur Windows 11 avec UE 5.5 installé, when je le lance, then 100% des tests pass + exit code 0 + rapport JUnit XML produit
+- [ ] Given le script run sur Windows 11 avec UE 5.7+ installé, when je le lance, then 100% des tests pass + exit code 0 + rapport JUnit XML produit
 - [ ] Given test run, when je chronomètre, then temps total < 10 min
 - [ ] **Unhappy path** : un test fail → script exit code 1 + log complet du test failing extrait + exit proprement
 
@@ -1230,17 +1231,17 @@ Polish VFX v2 (exhaust advanced, volumetric smoke, stage separation debris), Met
 | 7 | External — Steam not running | OSS Steam init fails | Fallback to offline mode, disable achievements | "Offline mode — achievements disabled" |
 | 8 | Extreme precision — vehicle at > 10M km from origin | Post-MVP, but architectural guard now | Warn + refuse spawn | "Object too far from world origin for current MVP scope" |
 | 9 | MetaHuman import failure — Quixel Bridge offline | Asset sync fails | Log + instructions | "MetaHuman sync failed. See docs/metahuman-setup.md" |
-| 10 | Plugin version mismatch (Mountea, GenericGraph) | UE 5.5 incompatibility | Compile fail with explicit message | "Plugin Mountea requires UE 5.5.x exactly — see docs/plugin-versions.md" |
+| 10 | Plugin version mismatch (Mountea, GenericGraph) | UE 5.7+ incompatibility (plugins originally validated against 5.5 — re-check required) | Compile fail with explicit message | "Plugin Mountea requires UE 5.7+ — see docs/plugin-versions.md" |
 
 ## Risks & Mitigations
 
 | # | Risk | Probability | Impact | Mitigation |
 |---|------|------------|--------|------------|
-| 1 | **Précision orbitale long-terme** malgré LWC (solver Chaos reste f32 interne en 5.5) | High | High | Dual-tier enforcé : rail f64 exclusif pour trajectoires longues, Chaos uniquement local. Test Automation `LEO100Revolutions` obligatoire CI. Leapfrog fallback prêt si Newton dérive. Origin rebasing > 10 km. |
+| 1 | **Précision orbitale long-terme** malgré LWC (solver Chaos reste f32 interne — vrai UE 5.5 → 5.7+) | High | High | Dual-tier enforcé : rail f64 exclusif pour trajectoires longues, Chaos uniquement local. Test Automation `LEO100Revolutions` obligatoire CI. Leapfrog fallback prêt si Newton dérive. Origin rebasing > 10 km. |
 | 2 | **Scope explosion Niagara VFX** (exhaust + plasma + volumetric smoke) | High | High | Time-box 3 jours par VFX v1. Polish reporté Phase 11. Fab/Quixel baseline autorisée. Règle : pas de VFX pass 2 tant que mission ne boucle pas end-to-end. |
 | 3 | **Switching Chaos↔rail cohérent en énergie** (source de bugs silencieux) | Med | High | Source de vérité unique : `UOrbitalComponent`. Tests Automation dédiés `RoundTripConservation`. HUD dev mode affiche mode courant + velocity + énergie. 1 semaine Phase 3 dédiée. |
 | 4 | **MetaHuman perf** avec 3 crew simultanés + Lumen HW RT | Med | Med | Benchmark dès Phase 5. LOD agressifs > 10 m. Grooms désactivables via setting. Fallback à Nanite meshes simples si perf insuffisante. |
-| 5 | **Plugin compatibility** (Mountea, GenericGraph) avec UE 5.5+ | Med | Med | Pin versions exactes dans `docs/plugin-versions.md`. Fork les plugins si abandonnés. Fallback custom si maintainer disparait. |
+| 5 | **Plugin compatibility** (Mountea, GenericGraph) avec UE 5.7+ — ces plugins étaient validés contre 5.5, bump à 5.7 ajoute 2 minor versions de delta | Med→**High** | Med | Re-vérifier marketplace versions AVANT Phase 5 (US-033). Pin versions exactes dans `docs/plugin-versions.md`. Fork les plugins si abandonnés. Fallback custom si maintainer disparait. |
 | 6 | **Parentalité** (jumelles) interrompt phases critiques | High | Med | Chaque story indépendamment complétable. Tests Automation préservent contexte. Git commits signés à chaque fin de session. Aucun WIP > 48h. |
 | 7 | **C++ learning curve** sur UE5 idioms (GC, UObject, Reflection) | Med | Med | Claude Code écrit le code, Arthur review ligne à ligne et commit. Lecture `docs/` Epic au besoin. Pas de code généré non-compris. |
 | 8 | **Packaging Shipping Steam** gotchas (steam_appid.txt, DLLs, achievements) | Med | Low | Intégration OSS Steam dès Phase 11 (pas en toute fin). Test sur laptop tiers Windows avant freeze. |
@@ -1281,7 +1282,7 @@ Framed as questions for engineering confirmation (Arthur) before we commit to ar
 - **Data Model** : `FOrbitalState` struct avec 7 `double` + `TWeakObjectPtr<UCelestialBody>` — confirmé. Alternative : matrice de rotation + position vector + velocity vector (state vector direct, pas d'elements). Trade-off : state vector plus simple mais moins utile pour rendering trajectory predicted. **Recommandation** : elements + conversions à la demande.
 - **API Design** : `UGameInstanceSubsystem` pour `USOIManager`, `UResourceLedger`, `UPossessionManager`, `USaveGameSubsystem`, `UDynamicEventManager` — subsystems singletons par GameInstance, cycle de vie propre, facilement accessibles. Alternatives : `UWorldSubsystem` (meurent au level change, bad). **Recommandation** : GameInstanceSubsystem pour tout ce qui est cross-level.
 - **Dependencies** :
-  - Mountea Dialogue System (v2.x compatible UE 5.5) — confirmé
+  - Mountea Dialogue System (v2.x était compatible UE 5.5 ; **compat UE 5.7 à re-valider avant adoption Phase 5**)
   - GenericGraph (jinyuliao, open-source) — confirmé
   - Runtime MetaHuman Lip Sync (georgy.dev) comme fallback Phase 5 si perf insuffisant
   - MetaHuman Animator (builtin Epic) — primary choice

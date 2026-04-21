@@ -3,7 +3,7 @@
 > Space agency immersive-sim — you *are* the commander, you *build* the agency, you *fly* the rockets.
 
 [![Status: Pre-Production](https://img.shields.io/badge/status-pre--production-orange)](docs/PRD.md)
-[![Engine: Unreal Engine 5.5](https://img.shields.io/badge/engine-UE%205.5-black)](https://www.unrealengine.com/)
+[![Engine: Unreal Engine 5.7+](https://img.shields.io/badge/engine-UE%205.7%2B-black)](https://www.unrealengine.com/)
 [![Language: C++](https://img.shields.io/badge/language-C%2B%2B-blue)](https://isocpp.org/)
 [![Platform: Windows / Steam](https://img.shields.io/badge/platform-Windows%20%7C%20Steam-lightgrey)](https://store.steampowered.com/)
 
@@ -21,7 +21,7 @@ The gameplay loop chains four playable phases (no cutscenes): **Base (TPV walkin
 
 Pre-production. The [Product Requirements Document](docs/PRD.md) is finalized and ready for implementation. **67 user stories organized into 12 phased releases**, estimated 30–40 calendar weeks of solo development.
 
-- ✅ Engine & stack decisions locked (UE 5.5 C++, Chaos + custom Kepler rail dual-tier physics, Lumen HW RT, Nanite, MetaHumans, Mountea Dialogue, GenericGraph tech tree)
+- ✅ Engine & stack decisions locked (UE 5.7+ C++, Chaos + custom Kepler rail dual-tier physics, Lumen HW RT, MegaLights, Nanite, MetaHumans, Mountea Dialogue, GenericGraph tech tree)
 - ✅ Architecture documented
 - ✅ Top 3 technical risks identified with mitigation strategies
 - ⏳ Phase 0 (project setup + first passing Kepler Automation test) — **next**
@@ -30,7 +30,7 @@ Pre-production. The [Product Requirements Document](docs/PRD.md) is finalized an
 
 | Layer | Choice |
 |---|---|
-| Engine | Unreal Engine 5.5.x |
+| Engine | Unreal Engine 5.7+ (tested: 5.7.4) — always-latest policy |
 | Language | C++ (Blueprints for wiring only) |
 | Rendering | Lumen Hardware RT, Nanite, Volumetric Clouds |
 | Physics | Chaos rigid body (local) + custom Kepler f64 (long-range) with dual-tier switching |
