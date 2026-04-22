@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "DeltaV.h"
+#include "Interaction/UInteractionComponent.h"
 
 ACommanderCharacter::ACommanderCharacter()
 {
@@ -45,6 +46,10 @@ ACommanderCharacter::ACommanderCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	// US-025 — interaction scanner. Uses the follow camera as probe origin so the
+	// crosshair direction matches what the player sees; 2 m reach per AC#2.
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character)
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)

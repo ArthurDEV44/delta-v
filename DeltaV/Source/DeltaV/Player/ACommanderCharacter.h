@@ -9,6 +9,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
+class UInteractionComponent;
 struct FInputActionValue;
 
 /**
@@ -27,6 +28,10 @@ class ACommanderCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	/** US-025 — scans the world ahead for IInteractable actors + dispatches E-press. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UInteractionComponent* InteractionComponent;
 
 protected:
 
@@ -89,4 +94,7 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	/** Returns InteractionComponent subobject **/
+	FORCEINLINE class UInteractionComponent* GetInteractionComponent() const { return InteractionComponent; }
 };
