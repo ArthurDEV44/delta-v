@@ -7,7 +7,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace
+namespace OrbitalMathTestNS
 {
 	/** Standard gravitational parameter of Earth (m^3 / s^2), CODATA-like. */
 	constexpr double KMuEarth = 3.986004418e14;
@@ -15,6 +15,7 @@ namespace
 	/** Radius of Earth used to build the ISS LEO fixture (m). */
 	constexpr double KEarthRadius = 6378136.3;
 }
+using namespace OrbitalMathTestNS;
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FOrbitalMathConversionsTest,

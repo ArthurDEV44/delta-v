@@ -14,7 +14,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace
+namespace OrbitalPropagatorTestNS
 {
 	constexpr double KMuEarth = 3.986004418e14;
 	constexpr double KEarthRadius = 6378136.3;
@@ -34,6 +34,7 @@ namespace
 		return State;
 	}
 }
+using namespace OrbitalPropagatorTestNS;
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FOrbitalPropagatorKeplerTest,

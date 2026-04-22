@@ -26,7 +26,7 @@ void USOIManagerTestListener::HandleOrphan(FGuid VesselKey)
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace
+namespace SOIManagerTestNS
 {
 	/** mu constants (m^3 / s^2). */
 	constexpr double KMuEarth = 3.986004418e14;
@@ -71,6 +71,7 @@ namespace
 		return L;
 	}
 }
+using namespace SOIManagerTestNS;
 
 // AC#1 — Registration + radii.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(

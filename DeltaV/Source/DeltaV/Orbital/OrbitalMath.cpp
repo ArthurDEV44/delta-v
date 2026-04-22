@@ -298,8 +298,8 @@ bool UOrbitalMath::ElementsToStateVector(
 
 namespace
 {
-	/** Wrap angle to [-pi, pi] in double precision. Mirrors the solver's WrapPi. */
-	double WrapPi(const double Angle)
+	/** Wrap angle to [-pi, pi] in double precision. Mirrors the solver's WrapPiMath. */
+	double WrapPiMath(const double Angle)
 	{
 		double Wrapped = FMath::Fmod(Angle + UE_DOUBLE_PI, UE_DOUBLE_TWO_PI);
 		if (Wrapped < 0.0)
@@ -318,7 +318,7 @@ double UOrbitalMath::TrueAnomalyToMean(const double TrueAnomaly, const double Ec
 		UE_LOG(LogDeltaV, Warning,
 			TEXT("OrbitalMath::TrueAnomalyToMean: invalid input (nu=%.17g, e=%.17g); returning wrapped nu."),
 			TrueAnomaly, Eccentricity);
-		return WrapPi(TrueAnomaly);
+		return WrapPiMath(TrueAnomaly);
 	}
 
 	// Half-angle form is bit-exact at e=0 (both sqrts evaluate to 1), so no
@@ -334,7 +334,7 @@ double UOrbitalMath::TrueAnomalyToMean(const double TrueAnomaly, const double Ec
 
 	// M = E - e * sin(E)
 	const double Mean = E - Eccentricity * FMath::Sin(E);
-	return WrapPi(Mean);
+	return WrapPiMath(Mean);
 }
 
 bool UOrbitalMath::PropagateKepler(
@@ -410,7 +410,7 @@ bool UOrbitalMath::PropagateKepler(
 	// Advance mean anomaly. Wrap to [-pi, pi] before handing to the solver so
 	// large |n*DeltaSeconds| (many revolutions) doesn't degrade Newton convergence.
 	const double M0 = TrueAnomalyToMean(Nu0, E);
-	const double M1 = WrapPi(M0 + N * DeltaSeconds);
+	const double M1 = WrapPiMath(M0 + N * DeltaSeconds);
 
 	// Always run through the solver; US-006 handles e == 0.0 as a bit-exact
 	// short-circuit internally, so circular orbits pay no cost and we avoid
