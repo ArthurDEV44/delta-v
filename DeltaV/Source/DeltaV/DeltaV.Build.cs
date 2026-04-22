@@ -22,7 +22,8 @@ public class DeltaV : ModuleRules
 			"SlateCore",
 			"Niagara",
 			"Chaos",
-			"GameplayTags"
+			"GameplayTags",
+			"AssetRegistry"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

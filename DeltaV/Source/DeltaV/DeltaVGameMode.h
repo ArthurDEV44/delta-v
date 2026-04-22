@@ -10,7 +10,7 @@
  *  Simple GameMode for a third person game
  */
 UCLASS(abstract)
-class ADeltaVGameMode : public AGameModeBase
+class DELTAV_API ADeltaVGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
